@@ -1,0 +1,52 @@
+name: Build and Test Odin Game
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Test Game
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Install Odin Compiler
+      - name: Install Odin Compiler
+        run: |
+          curl -L https://github.com/odin-lang/Odin/releases/latest/download/odin-linux.zip -o odin.zip
+          unzip odin.zip -d odin
+          sudo mv odin/odin /usr/local/bin/
+
+      # Step 3: Set up Raylib (dependency for Odin project)
+      - name: Install Raylib
+        run: |
+          sudo apt update
+          sudo apt install -y libraylib-dev
+
+      # Step 4: Build the project
+      - name: Build Project
+        run: odin build ./path/to/your/project -out:GameExecutable
+
+      # Step 5: Run Tests (if applicable)
+      - name: Run Tests
+        run: |
+          if [ -f "./tests/test_main.odin" ]; then
+            odin run ./tests/test_main.odin
+          else
+            echo "No tests found, skipping test step."
+          fi
+
+      # Step 6: Save build artifact
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: game-build
+          path: ./GameExecutable
