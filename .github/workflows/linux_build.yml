@@ -1,39 +1,42 @@
-name: Build Odin Game
+name: Build Odin Examples (Linux)
 
 on:
   push:
-    branches:
-      - '**'  # This will match all branches
   pull_request:
-    branches:
-      - '**'  # This will match all pull requests
+  workflow_dispatch:
+  schedule:
+    - cron: 0 20 * * *
+
+env:
+  FORCE_COLOR: "1"
 
 jobs:
-  build:
-    name: Build Game
+  checks:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      # Step 2: Install Odin Compiler (specific dev version)
-      - name: Install Odin Compiler (dev-2024-11)
+      - name: Set up Dependencies
         run: |
-          curl -L https://github.com/odin-lang/Odin/releases/download/dev-2024-11/odin-linux-amd64-dev-2024-11.zip -o odin.zip
-          unzip odin.zip -d odin_temp
-          mv odin_temp/odin-linux-amd64-nightly+2024-11-04 odin_temp/odin  # Rename the binary to 'odin'
-          sudo mv odin_temp/odin /usr/local/bin/odin  # Move it to /usr/local/bin/odin
-          sudo chmod +x /usr/local/bin/odin  # Ensure Odin is executable
+          sudo apt update
+          sudo apt install -y llvm-18
+          echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
 
-      # Step 3: Build the project
-      - name: Build Project
-        run: odin build ./ -out:GameExecutable
+      - name: Set up Odin
+        run: |
+          git clone https://github.com/odin-lang/Odin.git --depth 1 --single-branch --branch=master
+          cd Odin
+          make
+          ./odin report
 
-      # Step 4: Upload Build Artifact
+      - name: Build Odin Example
+        run: |
+          cd path/to/your/example
+          ./odin build . -out:ExampleExecutable
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: game-build
-          path: ./GameExecutable
+          name: example-build
+          path: ./ExampleExecutable
+
