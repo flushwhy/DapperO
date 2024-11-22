@@ -19,7 +19,7 @@ jobs:
       - name: Set up Dependencies
         run: |
           sudo apt update
-          sudo apt install -y llvm-18
+          sudo apt install -y llvm
           echo "/usr/lib/llvm-18/bin" >> "$GITHUB_PATH"
 
       - name: Set up Odin
