@@ -18,16 +18,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install Odin Compiler
-      - name: Install Odin Compiler
+      # Step 2: Install Odin Compiler (specific dev version)
+      - name: Install Odin Compiler (dev-2024-11)
         run: |
-          curl -L https://github.com/odin-lang/Odin/releases/latest/download/odin-linux.zip -o odin.zip
+          curl -L https://github.com/odin-lang/Odin/releases/download/dev-2024-11/odin-linux-amd64-dev-2024-11.zip -o odin.zip
           unzip odin.zip -d odin
           sudo mv odin/odin /usr/local/bin/
+          sudo chmod +x /usr/local/bin/odin  # Ensure Odin is executable
 
       # Step 3: Build the project
       - name: Build Project
-        run: odin build ./path/to/your/project -out:GameExecutable
+        run: odin build ./ -out:GameExecutable
 
       # Step 4: Upload Build Artifact
       - name: Upload Build Artifact
