@@ -22,8 +22,9 @@ jobs:
       - name: Install Odin Compiler (dev-2024-11)
         run: |
           curl -L https://github.com/odin-lang/Odin/releases/download/dev-2024-11/odin-linux-amd64-dev-2024-11.zip -o odin.zip
-          unzip odin.zip -d odin
-          sudo mv odin/odin /usr/local/bin/
+          unzip odin.zip -d odin_temp
+          mv odin_temp/odin-linux-amd64-nightly+2024-11-04 odin_temp/odin  # Rename the binary to 'odin'
+          sudo mv odin_temp/odin /usr/local/bin/odin  # Move it to /usr/local/bin/odin
           sudo chmod +x /usr/local/bin/odin  # Ensure Odin is executable
 
       # Step 3: Build the project
