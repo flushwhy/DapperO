@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Odin Example
         run: |
-          cd /src
+          cd ..
           ./odin build . -out:ExampleExecutable
 
       - name: Upload Build Artifact
