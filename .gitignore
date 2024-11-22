@@ -1,0 +1,32 @@
+# Odin build artifacts
+*.o
+*.obj
+*.asm
+*.ll
+*.bc
+
+# Executables
+*.exe
+*.out
+*.bin
+*.elf
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.iml
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Odin debug and build directories
+odin_cache/
+bin/
+build/
+DapperO
