@@ -183,8 +183,8 @@ update_nebulae :: proc(nebulae: []Nebula, dt: f32, windowWidth: i32) -> bool {
 		n.rect.width = n.AnimData.frame_rec.width / 8
 		n.rect.height = n.AnimData.frame_rec.height / 8
 		// Handle the boundaries or any other conditions
-		if n.position.x < 0 || n.position.x > f32(windowWidth + 100) {
-			n.velocity.x = -n.velocity.x // Reverse direction if out of bounds
+		if n.position.x < 0 || n.position.x >= f32(windowWidth + 500) {
+			//rl.UnloadTexture(n.texture) // Reverse direction if out of bounds
 		}
 
         // Update animation
@@ -234,7 +234,7 @@ main :: proc() {
 
 	// Initialize the game
 	game := Game{
-		player = initialize_player("assets/scarfy.png", 1_000.0, -700.0),
+		player = initialize_player("assets/scarfy.png", 1_000.0, -650.0),
 		background = initialize_parallax_layer("assets/far-buildings.png", 20.0),
 		midground = initialize_parallax_layer("assets/back-buildings.png", 40.0),
 		foreground = initialize_parallax_layer("assets/foreground.png", 60.0),
@@ -243,7 +243,7 @@ main :: proc() {
 	}
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
-	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 300.0)
+	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
 
 	defer close_game(&game)
 	running = true
