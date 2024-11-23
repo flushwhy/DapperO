@@ -3,7 +3,6 @@ package DapperO
 import rl "vendor:raylib"
 import time "core:time"
 
-
 Anim :: struct {
     frame_rec:   rl.Rectangle, // The current frame rectangle
     frame_count: i32,          // Total frames in the sprite sheet
@@ -24,7 +23,8 @@ Nebula :: struct {
     texture:       rl.Texture2D,
     position:      rl.Vector2,
     velocity:      rl.Vector2,
-    AnimData:     Anim,
+    AnimData:      Anim,
+	rect:          rl.Rectangle,
 }
 
 Player :: struct {
@@ -35,6 +35,7 @@ Player :: struct {
 	gravity:       f32,
 	jump_strength: f32,
 	AnimData:      Anim,
+	rect:          rl.Rectangle,
 }
 
 ParallaxLayer :: struct {
@@ -50,6 +51,12 @@ Game :: struct {
 	foreground:      ParallaxLayer,
 	window:          Window,
 	delta_time:      f32,
+}
+
+// AABB collision detection
+collides :: proc(a: rl.Rectangle, b: rl.Rectangle) -> bool {
+    return a.x < b.x + b.width && a.x + a.width > b.x &&
+           a.y < b.y + b.height && a.y + a.height > b.y
 }
 
 initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32) -> Player {
@@ -70,6 +77,7 @@ initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32) -
 		gravity = gravity,
 		jump_strength = jump_strength,
 		AnimData = anim,
+		rect = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)},
 	}
 }
 
@@ -105,6 +113,9 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
             player.AnimData.frame_rec.x = f32(player.AnimData.current_frame) * player.AnimData.frame_rec.width
         }
     }
+
+	player.rect.x = player.position.x
+    player.rect.y = player.position.y
 }
 
 initialize_nebulae :: proc(texture: rl.Texture2D, count: i32, start_x: f32, spacing: f32) -> []Nebula {
@@ -127,6 +138,7 @@ initialize_nebulae :: proc(texture: rl.Texture2D, count: i32, start_x: f32, spac
 			position = rl.Vector2{ start_x + spacing * f32(i), 380.0 - frame_height},
 			velocity = rl.Vector2{ -200.0, 0.0},
 			AnimData = anim,
+			rect = rl.Rectangle{start_x + spacing * f32(i), 380.0 - frame_height, frame_width, frame_height},
 		}
 	}
 
@@ -154,7 +166,7 @@ draw_parallax_layer :: proc(layer: ParallaxLayer, scale: f32) {
 	rl.DrawTextureEx(layer.texture, rl.Vector2{layer.x + f32(layer.texture.width) * scale, 0}, 0.0, scale, rl.WHITE)
 }
 
-update_nebulae :: proc(nebulae: []Nebula, dt: f32) -> bool {
+update_nebulae :: proc(nebulae: []Nebula, dt: f32, windowWidth: i32) -> bool {
     all_off_screen := true
 
     for &n in nebulae {
@@ -165,6 +177,15 @@ update_nebulae :: proc(nebulae: []Nebula, dt: f32) -> bool {
         if n.position.x + n.AnimData.frame_rec.width > 0 {
             all_off_screen = false
         }
+
+		n.rect.x = n.position.x
+		n.rect.y = n.position.y
+		n.rect.width = n.AnimData.frame_rec.width / 8
+		n.rect.height = n.AnimData.frame_rec.height / 8
+		// Handle the boundaries or any other conditions
+		if n.position.x < 0 || n.position.x > f32(windowWidth + 100) {
+			n.velocity.x = -n.velocity.x // Reverse direction if out of bounds
+		}
 
         // Update animation
         n.AnimData.running_time += dt
@@ -194,7 +215,6 @@ draw_nebulae :: proc(nebulae: []Nebula) {
     }
 }
 
-
 close_game :: proc(game: ^Game) {
 	rl.UnloadTexture(game.player.texture)
 	rl.UnloadTexture(game.background.texture)
@@ -203,7 +223,7 @@ close_game :: proc(game: ^Game) {
 	rl.CloseWindow()
 }
 
-running: bool 
+running: bool
 
 main :: proc() {
 	// Initialize the window
@@ -214,7 +234,7 @@ main :: proc() {
 
 	// Initialize the game
 	game := Game{
-		player = initialize_player("assets/scarfy.png", 1_000.0, -600.0),
+		player = initialize_player("assets/scarfy.png", 1_000.0, -700.0),
 		background = initialize_parallax_layer("assets/far-buildings.png", 20.0),
 		midground = initialize_parallax_layer("assets/back-buildings.png", 40.0),
 		foreground = initialize_parallax_layer("assets/foreground.png", 60.0),
@@ -222,12 +242,11 @@ main :: proc() {
 		delta_time = 0.0,
 	}
 
-
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
-	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
+	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 300.0)
 
 	defer close_game(&game)
-
+	running = true
 	// Main game loop
 	for !rl.WindowShouldClose() {
 		// Update delta time
@@ -239,43 +258,48 @@ main :: proc() {
 			game.window.height = rl.GetScreenHeight()
 		}
 		if running {
-		if update_nebulae(nebulae, rl.GetFrameTime()) {
-			running = false 
+
+			for nebula in nebulae {
+				if collides(nebula.rect, game.player.rect) {
+					running = false
+				}
+			}
+			if update_nebulae(nebulae, rl.GetFrameTime(), game.window.width) {
+				running = false 
+			}
+			// Update game logic
+			update_player(&game.player, game.delta_time, game.window.height)
+			update_parallax_layer(&game.background, game.delta_time, game.window.width)
+			update_parallax_layer(&game.midground, game.delta_time, game.window.width)
+			update_parallax_layer(&game.foreground, game.delta_time, game.window.width)
+
+			// Draw the game
+			rl.BeginDrawing()
+			rl.ClearBackground(rl.RAYWHITE)
+
+			// Draw parallax layers
+			draw_parallax_layer(game.background, 2.0)
+			draw_parallax_layer(game.midground, 2.0)
+			draw_parallax_layer(game.foreground, 2.0)
+
+			draw_nebulae(nebulae)
+			// Draw player
+			draw_player(game.player)
+
+			rl.EndDrawing()
+		} else {
+			// Drawing: End Screen
+			rl.BeginDrawing()
+			rl.ClearBackground(rl.BLACK)
+			draw_end_screen()
+			rl.EndDrawing()
+
+			// Restart logic
+			if rl.IsKeyPressed(.ENTER) {
+				// Reinitialize game state
+				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
+				running = true
+			}
 		}
-		// Update game logic
-		update_player(&game.player, game.delta_time, game.window.height)
-		update_parallax_layer(&game.background, game.delta_time, game.window.width)
-		update_parallax_layer(&game.midground, game.delta_time, game.window.width)
-		update_parallax_layer(&game.foreground, game.delta_time, game.window.width)
-
-		// Draw the game
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.RAYWHITE)
-
-		// Draw parallax layers
-		draw_parallax_layer(game.background, 2.0)
-		draw_parallax_layer(game.midground, 2.0)
-		draw_parallax_layer(game.foreground, 2.0)
-
-		draw_nebulae(nebulae)
-		// Draw player
-		draw_player(game.player)
-
-		rl.EndDrawing()
-	} else {
-		        // Drawing: End Screen
-				rl.BeginDrawing()
-				rl.ClearBackground(rl.BLACK)
-				draw_end_screen()
-				rl.EndDrawing()
-		
-				// Restart logic
-				if rl.IsKeyPressed(.ENTER) {
-					// Reinitialize game state
-					nebulae = initialize_nebulae(nebula_texture, 10, f32(rl.GetScreenWidth()), 300.0)
-
-					running = true
 	}
-  }
- }
 }
