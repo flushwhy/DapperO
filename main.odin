@@ -2,6 +2,7 @@ package DapperO
 
 import time "core:time"
 import rl "vendor:raylib"
+import fmt "core:fmt"
 
 Anim :: struct {
 	frame_rec:     rl.Rectangle, // The current frame rectangle
@@ -66,7 +67,7 @@ collides :: proc(a: rl.Rectangle, b: rl.Rectangle) -> bool {
 initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32) -> Player {
 	texture := rl.LoadTexture(filepath)
 	anim := Anim {
-		frame_rec     = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)}, // Assuming 8 frames horizontally
+		frame_rec     = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)}, // Assuming 6 frames horizontally
 		frame_count   = 6,
 		current_frame = 0,
 		update_time   = 1.0 / 12.0, // 12 FPS
@@ -97,8 +98,9 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
 	player.position.y += player.velocity.y * dt
 
 	// Check if player hits the ground
-	if player.position.y >= f32(window_height - player.texture.height) {
-		player.position.y = f32(window_height - player.texture.height)
+	if player.position.y >=   225 {
+		player.position.y =  225
+		fmt.println("Player hit the ground ", player.position.y)
 		player.velocity.y = 0
 		player.is_in_air = false
 	}
@@ -124,7 +126,12 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
 	player.rect.y = player.position.y
 }
 
-initialize_nebulae :: proc(texture: rl.Texture2D, count: i32, start_x: f32, spacing: f32) -> []Nebula {
+initialize_nebulae :: proc(
+	texture: rl.Texture2D,
+	count: i32,
+	start_x: f32,
+	spacing: f32,
+) -> []Nebula {
 	nebulae: []Nebula = make([]Nebula, count)
 
 	frame_width := f32(texture.width) / 8
@@ -167,7 +174,7 @@ draw_player :: proc(player: Player) {
 
 update_parallax_layer :: proc(layer: ^ParallaxLayer, dt: f32, window_width: i32) {
 	layer.x -= layer.speed * dt
-	if layer.x <= -f32(layer.texture.width * 2) {
+	if layer.x <= -f32(layer.texture.width) * 2 {
 		layer.x = 0.0
 	}
 }
@@ -277,8 +284,8 @@ main :: proc() {
 	// Initialize the game
 	game := Game {
 		player     = initialize_player("assets/scarfy.png", 1_000.0, -650.0),
-		background = initialize_parallax_layer("assets/far-buildings.png", 20.0),
-		midground  = initialize_parallax_layer("assets/back-buildings.png", 40.0),
+		background = initialize_parallax_layer("assets/far-buildings.png", 15.0),
+		midground  = initialize_parallax_layer("assets/back-buildings.png", 30.0),
 		foreground = initialize_parallax_layer("assets/foreground.png", 60.0),
 		window     = window,
 		delta_time = 0.0,
@@ -299,7 +306,12 @@ main :: proc() {
 			game.window.width = rl.GetScreenWidth()
 			game.window.height = rl.GetScreenHeight()
 		}
+
 		if running {
+
+			cam := rl.Camera2D {
+				zoom = f32(rl.GetScreenHeight()) / f32(window.height),
+			}
 
 			for nebula in nebulae {
 				if collides(nebula.rect, game.player.rect) {
@@ -316,7 +328,7 @@ main :: proc() {
 				running = false
 			}
 			// Update game logic
-			update_player(&game.player, game.delta_time, game.window.height)
+			update_player(&game.player, game.delta_time, i32(cam.zoom))
 			update_parallax_layer(&game.background, game.delta_time, game.window.width)
 			update_parallax_layer(&game.midground, game.delta_time, game.window.width)
 			update_parallax_layer(&game.foreground, game.delta_time, game.window.width)
@@ -324,7 +336,7 @@ main :: proc() {
 			// Draw the game
 			rl.BeginDrawing()
 			rl.ClearBackground(rl.RAYWHITE)
-
+			rl.BeginMode2D(cam)
 			// Draw parallax layers
 			draw_parallax_layer(game.background, 2.0)
 			draw_parallax_layer(game.midground, 2.0)
@@ -333,7 +345,7 @@ main :: proc() {
 			draw_nebulae(nebulae)
 			// Draw player
 			draw_player(game.player)
-
+			rl.EndMode2D()
 			rl.EndDrawing()
 		} else {
 			// Drawing: End Screen
@@ -344,6 +356,7 @@ main :: proc() {
 			} else {
 				draw_end_screen()
 			}
+			rl.EndMode2D()
 			rl.EndDrawing()
 
 			// Restart logic
