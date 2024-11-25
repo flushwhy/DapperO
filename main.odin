@@ -276,7 +276,7 @@ won: bool
 
 main :: proc() {
 	// Initialize the window
-	window := Window{"Dapper in Odin", 600, 350, 60, {.WINDOW_RESIZABLE}}
+	window := Window{"Dapper in Odin", 600, 350, 300, {.VSYNC_HINT, .WINDOW_RESIZABLE}}
 	rl.InitWindow(window.width, window.height, window.title)
 	rl.SetWindowState(window.control_flags)
 	rl.SetTargetFPS(window.fps)
