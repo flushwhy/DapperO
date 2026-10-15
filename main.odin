@@ -226,7 +226,6 @@ update_nebulae :: proc(nebulae: []Nebula, dt, scroll_speed: f32) {
 			n.rect.x = n.position.x
 		}
 	}
-	delete(nebulae)
 }
 
 draw_end_screen :: proc(elapsed_time: f32) {
