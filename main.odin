@@ -24,7 +24,7 @@ Nebula :: struct {
 	texture:  rl.Texture2D,
 	position: rl.Vector2,
 	velocity: rl.Vector2,
-	AnimData: Anim,
+	animation: Anim,
 	rect:     rl.Rectangle,
 }
 
@@ -35,7 +35,7 @@ Player :: struct {
 	is_in_air:     bool,
 	gravity:       f32,
 	jump_strength: f32,
-	AnimData:      Anim,
+	animation:      Anim,
 	rect:          rl.Rectangle,
 }
 
@@ -53,6 +53,7 @@ Game :: struct {
 	window:     Window,
 	delta_time: f32,
 	elapsed_time: f32,
+	is_running: bool,
 }
 
 // AABB collision detection
@@ -82,7 +83,7 @@ initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32, w
 		is_in_air = false,
 		gravity = gravity,
 		jump_strength = jump_strength,
-		AnimData = anim,
+		animation = anim,
 		rect = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)},
 	}
 }
@@ -99,7 +100,7 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
 	player.position.y += player.velocity.y * dt
 
 	// Check if player hits the ground
-	ground_y := f32(window_height) - player.AnimData.frame_rec.height - 60.0
+	ground_y := f32(window_height) - player.animation.frame_rec.height - 60.0
 	if player.position.y >= ground_y {
 		player.position.y = ground_y
 		player.velocity.y = 0
@@ -113,13 +114,13 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
 	}
 
 	if !player.is_in_air {
-		player.AnimData.running_time += dt
-		if player.AnimData.running_time >= player.AnimData.update_time {
-			player.AnimData.running_time = 0.0
-			player.AnimData.current_frame =
-				(player.AnimData.current_frame + 1) % player.AnimData.frame_count
-			player.AnimData.frame_rec.x =
-				f32(player.AnimData.current_frame) * player.AnimData.frame_rec.width
+		player.animation.running_time += dt
+		if player.animation.running_time >= player.animation.update_time {
+			player.animation.running_time = 0.0
+			player.animation.current_frame =
+				(player.animation.current_frame + 1) % player.animation.frame_count
+			player.animation.frame_rec.x =
+				f32(player.animation.current_frame) * player.animation.frame_rec.width
 		}
 	}
 
@@ -151,7 +152,7 @@ initialize_nebulae :: proc(
 			texture  = texture,
 			position = rl.Vector2{start_x + spacing * f32(i), 380.0 - frame_height},
 			velocity = rl.Vector2{-200.0, 0.0},
-			AnimData = anim,
+			animation = anim,
 			rect     = rl.Rectangle {
 				start_x + spacing * f32(i),
 				380.0 - frame_height,
@@ -167,13 +168,13 @@ initialize_nebulae :: proc(
 draw_player :: proc(player: Player) {
 	rl.DrawTextureRec(
 		player.texture,
-		player.AnimData.frame_rec,
+		player.animation.frame_rec,
 		rl.Vector2{player.position.x, player.position.y},
 		rl.WHITE,
 	)
 }
 
-update_parallax_layer :: proc(layer: ^ParallaxLayer, dt: f32, window_width: i32) {
+update_parallax_layer :: proc(layer: ^ParallaxLayer, dt: f32) {
 	layer.x -= layer.speed * dt
 	if layer.x <= -f32(layer.texture.width) * 2 {
 		layer.x = 0.0
@@ -199,14 +200,14 @@ update_nebulae :: proc(nebulae: []Nebula, dt, scroll_speed: f32) {
 		n.position.x += n.velocity.x * dt
 		n.rect.x = n.position.x
 		n.rect.y = n.position.y
-		n.rect.width = n.AnimData.frame_rec.width
-		n.rect.height = n.AnimData.frame_rec.height
+		n.rect.width = n.animation.frame_rec.width
+		n.rect.height = n.animation.frame_rec.height
 
-		n.AnimData.running_time += dt
-		for n.AnimData.running_time >= n.AnimData.update_time {
-			n.AnimData.running_time -= n.AnimData.update_time
-			n.AnimData.current_frame = (n.AnimData.current_frame + 1) % n.AnimData.frame_count
-			n.AnimData.frame_rec.x = f32(n.AnimData.current_frame) * n.AnimData.frame_rec.width
+		n.animation.running_time += dt
+		for n.animation.running_time >= n.animation.update_time {
+			n.animation.running_time -= n.animation.update_time
+			n.animation.current_frame = (n.animation.current_frame + 1) % n.animation.frame_count
+			n.animation.frame_rec.x = f32(n.animation.current_frame) * n.animation.frame_rec.width
 		}
 	}
 
@@ -215,11 +216,12 @@ update_nebulae :: proc(nebulae: []Nebula, dt, scroll_speed: f32) {
 		if n.position.x + n.rect.width < 0 {
 			rightmost := f32(rl.GetScreenWidth())
 			for other in nebulae {
-				if other.position.x + other.rect.width > rightmost {
-					rightmost = other.position.x + other.rect.width
+				other_right := other.position.x + other.rect.width
+				if other_right >= 0 && other_right > rightmost {
+					rightmost = other_right
 				}
 			}
-			// Vary the spacing without depending on a random seed or global RNG.
+			// Vary spacing deterministically; multiple recycled hazards remain evenly ordered.
 			gap := 220.0 + f32((i * 73) % 140)
 			n.position.x = rightmost + gap
 			n.rect.x = n.position.x
@@ -247,7 +249,7 @@ draw_end_screen :: proc() {
 
 draw_nebulae :: proc(nebulae: []Nebula) {
 	for n in nebulae {
-		rl.DrawTextureRec(n.texture, n.AnimData.frame_rec, n.position, rl.WHITE)
+		rl.DrawTextureRec(n.texture, n.animation.frame_rec, n.position, rl.WHITE)
 	}
 }
 
@@ -258,8 +260,6 @@ close_game :: proc(game: ^Game) {
 	rl.UnloadTexture(game.foreground.texture)
 	rl.CloseWindow()
 }
-
-running: bool
 
 main :: proc() {
 	// Initialize the window
@@ -277,6 +277,7 @@ main :: proc() {
 		window     = window,
 		delta_time = 0.0,
 		elapsed_time = 0.0,
+		is_running = false,
 	}
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
@@ -287,7 +288,7 @@ main :: proc() {
 	gj_state := gamejolt_init()
 	defer gamejolt_shutdown(&gj_state)
 	gamejolt_record_run(&gj_state)
-	running = true
+	game.is_running = true
 	// Main game loop
 	for !rl.WindowShouldClose() {
 		// Update delta time
@@ -299,7 +300,7 @@ main :: proc() {
 			game.window.height = rl.GetScreenHeight()
 		}
 
-		if running {
+		if game.is_running {
 			game.elapsed_time += game.delta_time
 			scroll_speed := min(200.0 + game.elapsed_time * 3.0, 520.0)
 
@@ -313,14 +314,14 @@ main :: proc() {
 
 			for nebula in nebulae {
 				if collides(nebula.rect, game.player.rect) {
-					running = false
+					game.is_running = false
 					gamejolt_record_death(&gj_state, int(game.elapsed_time))
 					break
 				}
 			}
-			update_parallax_layer(&game.background, game.delta_time, game.window.width)
-			update_parallax_layer(&game.midground, game.delta_time, game.window.width)
-			update_parallax_layer(&game.foreground, game.delta_time, game.window.width)
+			update_parallax_layer(&game.background, game.delta_time)
+			update_parallax_layer(&game.midground, game.delta_time)
+			update_parallax_layer(&game.foreground, game.delta_time)
 
 			// Draw the game
 			rl.BeginDrawing()
@@ -350,13 +351,13 @@ main :: proc() {
 				delete(nebulae)
 				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
 				game.elapsed_time = 0.0
-				game.player.position = rl.Vector2{100.0, f32(game.window.height) - game.player.AnimData.frame_rec.height - 60.0}
+				game.player.position = rl.Vector2{100.0, f32(game.window.height) - game.player.animation.frame_rec.height - 60.0}
 				game.player.velocity = rl.Vector2{0.0, 0.0}
 				game.player.is_in_air = false
 				game.player.rect.x = game.player.position.x
 				game.player.rect.y = game.player.position.y
 				gamejolt_record_run(&gj_state)
-				running = true
+				game.is_running = true
 			}
 		}
 	}
