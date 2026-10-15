@@ -299,6 +299,7 @@ main :: proc() {
 	defer close_game(&game)
 	gj_state := gamejolt_init()
 	defer gamejolt_shutdown(&gj_state)
+	gamejolt_record_run(&gj_state)
 	running = true
 	// Main game loop
 	for !rl.WindowShouldClose() {
@@ -372,6 +373,7 @@ main :: proc() {
 				// Reinitialize game state
 				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
 				game.elapsed_time = 0.0
+				gamejolt_record_run(&gj_state)
 				running = true
 				won = false
 			}
