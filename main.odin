@@ -52,6 +52,7 @@ Game :: struct {
 	foreground: ParallaxLayer,
 	window:     Window,
 	delta_time: f32,
+	elapsed_time: f32,
 }
 
 // AABB collision detection
@@ -295,6 +296,8 @@ main :: proc() {
 	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
 
 	defer close_game(&game)
+	gj_state := gamejolt_init()
+	defer gamejolt_shutdown(&gj_state)
 	running = true
 	// Main game loop
 	for !rl.WindowShouldClose() {
@@ -308,24 +311,28 @@ main :: proc() {
 		}
 
 		if running {
+			game.elapsed_time += game.delta_time
 
 			cam := rl.Camera2D {
 				zoom = f32(rl.GetScreenHeight()) / f32(window.height),
 			}
 
 			for nebula in nebulae {
-				if collides(nebula.rect, game.player.rect) {
+				if running && collides(nebula.rect, game.player.rect) {
 					running = false
+					gamejolt_record_death(&gj_state)
 				}
 			}
 
-			if game.player.position.x > nebulae[9].position.x + nebulae[9].rect.width {
+			if running && game.player.position.x > nebulae[9].position.x + nebulae[9].rect.width {
 				// Player passed the nebula, show win screen
 				running = false
 				won = true
+				gamejolt_record_win(&gj_state, int(game.elapsed_time))
 			}
-			if update_nebulae(nebulae, rl.GetFrameTime(), game.window.width) {
+			if running && update_nebulae(nebulae, rl.GetFrameTime(), game.window.width) {
 				running = false
+				gamejolt_record_death(&gj_state)
 			}
 			// Update game logic
 			update_player(&game.player, game.delta_time, i32(cam.zoom))
@@ -363,6 +370,7 @@ main :: proc() {
 			if rl.IsKeyPressed(.ENTER) {
 				// Reinitialize game state
 				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
+				game.elapsed_time = 0.0
 				running = true
 				won = false
 			}
