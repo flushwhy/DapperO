@@ -46,11 +46,14 @@ gamejolt_init :: proc() -> GameJolt_State {
         fmt.printfln("[GameJolt] Could not open online session: %v", session_err)
     }
 
-    _, data_err := gj.gj_data_increment(&state.session, "runs", 1, user = true)
-    if data_err != .None {
-        fmt.printfln("[GameJolt] Could not update run count: %v", data_err)
-    }
     return state
+}
+
+// Counts each attempt, including attempts after a restart.
+gamejolt_record_run :: proc(state: ^GameJolt_State) {
+    if !state.logged_in do return
+    _, err := gj.gj_data_increment(&state.session, "runs", 1, user = true)
+    if err != .None do fmt.printfln("[GameJolt] Could not update run count: %v", err)
 }
 
 // Records a failed run in the player's Game Jolt data store.
