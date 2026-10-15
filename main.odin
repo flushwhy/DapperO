@@ -238,7 +238,7 @@ draw_end_screen :: proc(elapsed_time: f32) {
 		rl.RED,
 	)
 	rl.DrawText(
-		cstring(fmt.tprintf("Survived: %.1f seconds", elapsed_time)),
+		fmt.ctprintf("Survived: %.1f seconds", elapsed_time),
 		rl.GetScreenWidth() / 2 - 130,
 		rl.GetScreenHeight() / 2,
 		20,
@@ -339,7 +339,7 @@ main :: proc() {
 			draw_parallax_layer(game.foreground, 2.0)
 
 			draw_nebulae(nebulae)
-			rl.DrawText(cstring(fmt.tprintf("Survived: %.1f s", game.elapsed_time)), 12, 12, 20, rl.WHITE)
+			rl.DrawText(fmt.ctprintf("Survived: %.1f s", game.elapsed_time), 12, 12, 20, rl.WHITE)
 			// Draw player
 			draw_player(game.player)
 			rl.EndMode2D()
