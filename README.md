@@ -20,6 +20,8 @@ DapperO is a small Raylib platformer written in Odin. It also demonstrates calli
      Gamejoltodin/
    ```
 
+   Until the native-session change in Gamejoltodin is merged, check out its `feat/odin-first` branch in that clone. After it lands, use the default branch.
+
 2. In `gamejolt_integration.odin`, replace the placeholder game ID, private key, username, and user token with your Game Jolt values. Do not commit real credentials. Set `GAMEJOLT_WIN_TROPHY_ID` to a real trophy ID to enable trophy unlocking; leave it at `0` to disable that feature.
 
 3. Install Odin and ensure the dependencies required by both projects are available. DapperO uses the Raylib vendor package; Gamejoltodin uses its vendored curl bindings and the platform's curl dependencies.
