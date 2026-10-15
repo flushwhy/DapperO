@@ -12,15 +12,19 @@ DapperO is a small Raylib platformer written in Odin. It also demonstrates calli
 
 ## Setup
 
-1. Clone both repositories next to each other:
+1. Clone DapperO with its Gamejoltodin submodule:
 
-   ```text
-   workspace/
-     DapperO/
-     Gamejoltodin/
+   ```sh
+   git clone --recurse-submodules https://github.com/flushwhy/DapperO.git
    ```
 
-   Until the native-session change in Gamejoltodin is merged, check out its `feat/odin-first` branch in that clone. After it lands, use the default branch.
+   If DapperO is already cloned without its submodule, initialize it with:
+
+   ```sh
+   git submodule update --init --recursive
+   ```
+
+   The submodule pins the native API revision used by this example, so the package and API stay in sync.
 
 2. In `gamejolt_integration.odin`, replace the placeholder game ID, private key, username, and user token with your Game Jolt values. Do not commit real credentials. Set `GAMEJOLT_SURVIVAL_TROPHY_ID` and `GAMEJOLT_SURVIVAL_TROPHY_SECONDS` to configure an optional survival milestone; leave the ID at `0` to disable it.
 
@@ -29,7 +33,7 @@ DapperO is a small Raylib platformer written in Odin. It also demonstrates calli
 4. From the DapperO directory, run:
 
    ```sh
-   odin run . -collection:gamejolt=../Gamejoltodin
+   odin run . -collection:gamejolt=Gamejoltodin
    ```
 
    The collection mapping makes the library's `gamejolt` package available as `gamejolt:gamejolt`. The example calls the library directly; it does not use the C ABI.
