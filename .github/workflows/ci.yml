@@ -1,0 +1,36 @@
+name: Odin check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DapperO and Gamejoltodin submodule
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Odin
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          response=$(curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" https://api.github.com/repos/odin-lang/Odin/releases/latest)
+          asset_url=$(echo "$response" | jq -r '.assets[]? | select(.name | contains("linux-amd64")) | .browser_download_url' | head -n1)
+          if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+            echo "No linux-amd64 Odin release asset found"
+            exit 1
+          fi
+          curl -fsSL -o odin_archive "$asset_url"
+          mkdir -p odin
+          tar -xzf odin_archive -C odin --strip-components=1
+          chmod +x odin/odin
+          echo "$PWD/odin" >> "$GITHUB_PATH"
+
+      - name: Type-check DapperO and Game Jolt integration
+        run: odin check . -collection:gamejolt=Gamejoltodin
