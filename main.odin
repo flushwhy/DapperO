@@ -360,5 +360,5 @@ main :: proc() {
 			}
 		}
 	}
+	delete(nebulae)
 }
-
