@@ -65,7 +65,7 @@ collides :: proc(a: rl.Rectangle, b: rl.Rectangle) -> bool {
 	)
 }
 
-initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32) -> Player {
+initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32, window_height: i32) -> Player {
 	texture := rl.LoadTexture(filepath)
 	anim := Anim {
 		frame_rec     = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)}, // Assuming 6 frames horizontally
@@ -77,7 +77,7 @@ initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32) -
 
 	return Player {
 		texture = texture,
-		position = rl.Vector2{100.0, 380.0 - f32(texture.height)},
+		position = rl.Vector2{100.0, f32(window_height) - f32(texture.height) - 60.0},
 		velocity = rl.Vector2{0.0, 0.0},
 		is_in_air = false,
 		gravity = gravity,
@@ -99,9 +99,9 @@ update_player :: proc(player: ^Player, dt: f32, window_height: i32) {
 	player.position.y += player.velocity.y * dt
 
 	// Check if player hits the ground
-	if player.position.y >=   225 {
-		player.position.y =  225
-		fmt.println("Player hit the ground ", player.position.y)
+	ground_y := f32(window_height) - player.AnimData.frame_rec.height - 60.0
+	if player.position.y >= ground_y {
+		player.position.y = ground_y
 		player.velocity.y = 0
 		player.is_in_air = false
 	}
@@ -225,11 +225,7 @@ update_nebulae :: proc(nebulae: []Nebula, dt, scroll_speed: f32) {
 			n.rect.x = n.position.x
 		}
 	}
-}
-
-draw_hud :: proc(elapsed_time, scroll_speed: f32) {
-	rl.DrawText(fmt.tprintf("Survived: %.1f s", elapsed_time), 16, 12, 20, rl.WHITE)
-	rl.DrawText(fmt.tprintf("Speed: %.0f", scroll_speed), 16, 36, 16, rl.WHITE)
+	delete(nebulae)
 }
 
 draw_end_screen :: proc() {
@@ -274,7 +270,7 @@ main :: proc() {
 
 	// Initialize the game
 	game := Game {
-		player     = initialize_player("assets/scarfy.png", 1_000.0, -650.0),
+		player     = initialize_player("assets/scarfy.png", 1_000.0, -650.0, window.height),
 		background = initialize_parallax_layer("assets/far-buildings.png", 15.0),
 		midground  = initialize_parallax_layer("assets/back-buildings.png", 30.0),
 		foreground = initialize_parallax_layer("assets/foreground.png", 60.0),
@@ -285,7 +281,7 @@ main :: proc() {
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
 	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
-	defer delete(nebulae)
+	defer rl.UnloadTexture(nebula_texture)
 
 	defer close_game(&game)
 	gj_state := gamejolt_init()
@@ -318,7 +314,7 @@ main :: proc() {
 			for nebula in nebulae {
 				if collides(nebula.rect, game.player.rect) {
 					running = false
-					gamejolt_record_death(&gj_state)
+					gamejolt_record_death(&gj_state, int(game.elapsed_time))
 					break
 				}
 			}
@@ -354,9 +350,11 @@ main :: proc() {
 				delete(nebulae)
 				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
 				game.elapsed_time = 0.0
-				game.player.position = rl.Vector2{100.0, 380.0 - f32(game.player.texture.height)}
+				game.player.position = rl.Vector2{100.0, f32(game.window.height) - game.player.AnimData.frame_rec.height - 60.0}
 				game.player.velocity = rl.Vector2{0.0, 0.0}
 				game.player.is_in_air = false
+				game.player.rect.x = game.player.position.x
+				game.player.rect.y = game.player.position.y
 				gamejolt_record_run(&gj_state)
 				running = true
 			}
