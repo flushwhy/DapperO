@@ -1,10 +1,9 @@
 package DapperO
 
-//import "core:time"
 import rl "vendor:raylib"
 import fmt "core:fmt"
 
-Anim :: struct {
+Animation :: struct {
 	frame_rec:     rl.Rectangle, // The current frame rectangle
 	frame_count:   i32, // Total frames in the sprite sheet
 	current_frame: i32, // Current frame index
@@ -24,7 +23,7 @@ Nebula :: struct {
 	texture:  rl.Texture2D,
 	position: rl.Vector2,
 	velocity: rl.Vector2,
-	animation: Anim,
+	animation: Animation,
 	rect:     rl.Rectangle,
 }
 
@@ -35,7 +34,7 @@ Player :: struct {
 	is_in_air:     bool,
 	gravity:       f32,
 	jump_strength: f32,
-	animation:      Anim,
+	animation:      Animation,
 	rect:          rl.Rectangle,
 }
 
@@ -68,7 +67,7 @@ collides :: proc(a: rl.Rectangle, b: rl.Rectangle) -> bool {
 
 initialize_player :: proc(filepath: cstring, gravity: f32, jump_strength: f32, window_height: i32) -> Player {
 	texture := rl.LoadTexture(filepath)
-	anim := Anim {
+	anim := Animation {
 		frame_rec     = rl.Rectangle{0, 0, f32(texture.width) / 6, f32(texture.height)}, // Assuming 6 frames horizontally
 		frame_count   = 6,
 		current_frame = 0,
@@ -140,7 +139,7 @@ initialize_nebulae :: proc(
 	frame_height := f32(texture.height) / 8
 
 	for i in 0 ..< count {
-		anim := Anim {
+		anim := Animation {
 			frame_rec     = rl.Rectangle{0, 0, frame_width, frame_height},
 			frame_count   = 8,
 			current_frame = 0,
@@ -230,13 +229,20 @@ update_nebulae :: proc(nebulae: []Nebula, dt, scroll_speed: f32) {
 	delete(nebulae)
 }
 
-draw_end_screen :: proc() {
+draw_end_screen :: proc(elapsed_time: f32) {
 	rl.DrawText(
 		"Game Over!",
 		rl.GetScreenWidth() / 2 - 100,
 		rl.GetScreenHeight() / 2 - 50,
 		40,
 		rl.RED,
+	)
+	rl.DrawText(
+		fmt.tprintf("Survived: %.1f seconds", elapsed_time),
+		rl.GetScreenWidth() / 2 - 130,
+		rl.GetScreenHeight() / 2,
+		20,
+		rl.WHITE,
 	)
 	rl.DrawText(
 		"Press [ENTER] to Restart",
@@ -281,7 +287,7 @@ main :: proc() {
 	}
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
-	nebulae := initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
+	nebulae := initialize_nebulae(nebula_texture, 10, f32(window.width) + 50.0, 300.0)
 	defer rl.UnloadTexture(nebula_texture)
 
 	defer close_game(&game)
@@ -342,14 +348,14 @@ main :: proc() {
 			// Drawing: End Screen
 			rl.BeginDrawing()
 			rl.ClearBackground(rl.BLACK)
-			draw_end_screen()
+			draw_end_screen(game.elapsed_time)
 			rl.EndDrawing()
 
 			// Restart logic
 			if rl.IsKeyPressed(.ENTER) {
 				// Reinitialize game state
 				delete(nebulae)
-				nebulae = initialize_nebulae(nebula_texture, 10, 640.0, 450.0)
+				nebulae = initialize_nebulae(nebula_texture, 10, f32(game.window.width) + 50.0, 300.0)
 				game.elapsed_time = 0.0
 				game.player.position = rl.Vector2{100.0, f32(game.window.height) - game.player.animation.frame_rec.height - 60.0}
 				game.player.velocity = rl.Vector2{0.0, 0.0}
