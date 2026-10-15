@@ -65,7 +65,8 @@ gamejolt_record_death :: proc(state: ^GameJolt_State) {
 gamejolt_record_win :: proc(state: ^GameJolt_State, elapsed_seconds: int) {
     if !state.logged_in do return
 
-    score_text := fmt.tprintf("%d seconds", elapsed_seconds, allocator = context.temp_allocator)
+    score_text := fmt.tprintf("%d seconds", elapsed_seconds)
+    defer delete(score_text)
     score_err := gj.gj_scores_submit(&state.session, score_text, elapsed_seconds, 0, "DapperO")
     if score_err != .None do fmt.printfln("[GameJolt] Score submission failed: %v", score_err)
 
