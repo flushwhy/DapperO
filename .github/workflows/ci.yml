@@ -10,15 +10,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout DapperO
-        uses: actions/checkout@v4
-
-      - name: Checkout Gamejoltodin native API
+      - name: Checkout DapperO and Gamejoltodin submodule
         uses: actions/checkout@v4
         with:
-          repository: flushwhy/Gamejoltodin
-          ref: feat/odin-first
-          path: Gamejoltodin
+          submodules: recursive
 
       - name: Install Odin
         shell: bash
