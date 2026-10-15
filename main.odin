@@ -290,6 +290,7 @@ main :: proc() {
 		foreground = initialize_parallax_layer("assets/foreground.png", 60.0),
 		window     = window,
 		delta_time = 0.0,
+		elapsed_time = 0.0,
 	}
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
