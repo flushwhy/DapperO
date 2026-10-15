@@ -247,7 +247,7 @@ draw_end_screen :: proc(elapsed_time: f32) {
 	rl.DrawText(
 		"Press [ENTER] to Restart",
 		rl.GetScreenWidth() / 2 - 150,
-		rl.GetScreenHeight() / 2 + 10,
+		rl.GetScreenHeight() / 2 + 40,
 		20,
 		rl.WHITE,
 	)
@@ -288,9 +288,8 @@ main :: proc() {
 
 	nebula_texture := rl.LoadTexture("assets/12_nebula_spritesheet.png")
 	nebulae := initialize_nebulae(nebula_texture, 10, f32(window.width) + 50.0, 300.0)
-	defer rl.UnloadTexture(nebula_texture)
-
 	defer close_game(&game)
+	defer rl.UnloadTexture(nebula_texture)
 	gj_state := gamejolt_init()
 	defer gamejolt_shutdown(&gj_state)
 	gamejolt_record_run(&gj_state)
