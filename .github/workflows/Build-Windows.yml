@@ -25,7 +25,7 @@ jobs:
         run: scripts\setup_gamejoltodin.bat
 
       - name: Check Gamejoltodin example
-        run: odin check examples/gamejoltodin
+        run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
 
       - name: Build DapperO
-        run: odin build .
+        run: odin build . -collection:gamejolt=vendor/Gamejoltodin
