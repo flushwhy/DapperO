@@ -24,7 +24,7 @@ jobs:
         uses: laytan/setup-odin@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: dev-2026-05-nightly
+          branch: 84bc3fc2100b0f7880a3af37f71bccdcda41c6f9
 
       - name: Show Odin version
         run: odin version
@@ -65,7 +65,7 @@ jobs:
 
       - name: Build DapperO (Windows)
         if: runner.os == 'Windows'
-        run: odin build . -linker:msvc -collection:gamejolt=vendor/Gamejoltodin
+        run: odin build . -out:dappero.exe -strict-style -vet -no-bounds-check -o:speed -subsystem:windows -collection:gamejolt=vendor/Gamejoltodin
 
       - name: Build DapperO (Linux and macOS)
         if: runner.os != 'Windows'
