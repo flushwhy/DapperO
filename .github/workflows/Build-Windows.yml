@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare pinned Gamejoltodin source
         shell: cmd
-        run: scripts\setup_gamejoltodin.bat
+        run: scripts\\setup_gamejoltodin.bat
 
       - name: Check Gamejoltodin example
         run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
