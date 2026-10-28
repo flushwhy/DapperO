@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2022
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -20,15 +25,44 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare pinned Gamejoltodin source
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install curl
+
+      - name: Prepare pinned Gamejoltodin source (Windows)
+        if: runner.os == 'Windows'
         shell: cmd
         run: scripts\setup_gamejoltodin.bat
+
+      - name: Prepare pinned Gamejoltodin source (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="vendor/Gamejoltodin"
+          pinned_commit="2f49e315220f29d88f51648bf5f1757771f36d84"
+          mkdir -p vendor
+          if [ ! -d "$dest/.git" ]; then
+            git clone https://github.com/flushwhy/Gamejoltodin.git "$dest"
+          fi
+          git -C "$dest" fetch origin "$pinned_commit"
+          git -C "$dest" checkout --detach "$pinned_commit"
 
       - name: Check Gamejoltodin example
         run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
 
       - name: Configure MSVC environment
+        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build DapperO
+      - name: Build DapperO (Windows)
+        if: runner.os == 'Windows'
         run: odin build . -linker:lld -collection:gamejolt=vendor/Gamejoltodin
+
+      - name: Build DapperO (Linux and macOS)
+        if: runner.os != 'Windows'
+        run: odin build . -collection:gamejolt=vendor/Gamejoltodin
