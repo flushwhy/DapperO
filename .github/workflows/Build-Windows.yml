@@ -31,4 +31,4 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build DapperO
-        run: odin build . -collection:gamejolt=vendor/Gamejoltodin
+        run: odin build . -linker:lld -collection:gamejolt=vendor/Gamejoltodin
