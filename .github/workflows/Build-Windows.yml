@@ -65,7 +65,7 @@ jobs:
 
       - name: Build DapperO (Windows)
         if: runner.os == 'Windows'
-        run: odin build . -linker:lld -collection:gamejolt=vendor/Gamejoltodin
+        run: odin build . -collection:gamejolt=vendor/Gamejoltodin
 
       - name: Build DapperO (Linux and macOS)
         if: runner.os != 'Windows'
