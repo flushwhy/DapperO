@@ -1,4 +1,5 @@
-Dapper in odin
----
+# DapperO
 
-This is one of my projects reworked into Odin
+A small 2D platformer built with Odin and Raylib.
+
+See [Gamejoltodin integration example](examples/gamejoltodin/README.md) for a runnable API example.
