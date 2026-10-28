@@ -1,0 +1,3 @@
+[submodule "vendor/Gamejoltodin"]
+	path = vendor/Gamejoltodin
+	url = https://github.com/flushwhy/Gamejoltodin.git
