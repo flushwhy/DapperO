@@ -2,7 +2,7 @@ package gamejoltodin_example
 
 import fmt "core:fmt"
 import os "core:os"
-import gj "vendor:Gamejoltodin/gamejolt"
+import gj "gamejolt:gamejolt"
 
 main :: proc() {
 	game_id := os.get_env("GAMEJOLT_GAME_ID", context.temp_allocator)
