@@ -27,5 +27,8 @@ jobs:
       - name: Check Gamejoltodin example
         run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
 
+      - name: Configure MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build DapperO
         run: odin build . -collection:gamejolt=vendor/Gamejoltodin
