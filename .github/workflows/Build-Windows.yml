@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           dest="vendor/Gamejoltodin"
-          pinned_commit="2f49e315220f29d88f51648bf5f1757771f36d84"
+          pinned_commit="79302eeff588cb4c52ed32e7384fa1a3392d6682"
           mkdir -p vendor
           if [ ! -d "$dest/.git" ]; then
             git clone https://github.com/flushwhy/Gamejoltodin.git "$dest"
