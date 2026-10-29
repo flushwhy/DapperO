@@ -57,4 +57,6 @@ if not exist "%CURL_LIB_DIR%\libcurl.lib" (
 set "GAMEJOLT_CURL_LIB_DIR=%CURL_LIB_DIR%"
 set "LIB=%CURL_LIB_DIR%;%LIB%"
 if exist "%CURL_LIB_DIR%\..\bin" set "PATH=%CURL_LIB_DIR%\..\bin;%PATH%"
+if defined GITHUB_ENV echo GAMEJOLT_CURL_LIB_DIR=%CURL_LIB_DIR%>>"%GITHUB_ENV%"
+if defined GITHUB_PATH if exist "%CURL_LIB_DIR%\..\bin" echo %CURL_LIB_DIR%\..\bin>>"%GITHUB_PATH%"
 echo [curl] Using libcurl.lib: "%CURL_LIB_DIR%\libcurl.lib"
