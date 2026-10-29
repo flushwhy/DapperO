@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 set "ROOT=%~dp0.."
 set "DEST=%ROOT%\vendor\Gamejoltodin"
-set "PINNED_COMMIT=2f49e315220f29d88f51648bf5f1757771f36d84"
+set "PINNED_COMMIT=79302eeff588cb4c52ed32e7384fa1a3392d6682"
 
 if not exist "%DEST%\.git" (
     if not exist "%ROOT%\vendor" mkdir "%ROOT%\vendor"
