@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "ROOT=%~dp0.."
 set "DEST=%ROOT%\vendor\Gamejoltodin"
@@ -29,23 +30,23 @@ if not defined CURL_LIB_DIR (
     echo [curl] libcurl.lib not found; installing curl:x64-windows with vcpkg...
     set "VCPKG_ROOT=%VCPKG_INSTALLATION_ROOT%"
     if not defined VCPKG_ROOT set "VCPKG_ROOT=%LOCALAPPDATA%\vcpkg"
-    if not exist "%VCPKG_ROOT%\vcpkg.exe" (
-        if exist "%VCPKG_ROOT%" if not exist "%VCPKG_ROOT%\.git" set "VCPKG_ROOT=%LOCALAPPDATA%\vcpkg-bootstrap"
-        if not exist "%VCPKG_ROOT%\vcpkg.exe" (
-            if not exist "%VCPKG_ROOT%\.git" (
-                git clone https://github.com/microsoft/vcpkg.git "%VCPKG_ROOT%"
+    if not exist "!VCPKG_ROOT!\vcpkg.exe" (
+        if exist "!VCPKG_ROOT!" if not exist "!VCPKG_ROOT!\.git" set "VCPKG_ROOT=%LOCALAPPDATA%\vcpkg-bootstrap"
+        if not exist "!VCPKG_ROOT!\vcpkg.exe" (
+            if not exist "!VCPKG_ROOT!\.git" (
+                git clone https://github.com/microsoft/vcpkg.git "!VCPKG_ROOT!"
                 if errorlevel 1 (
                     echo [ERROR] Could not download vcpkg. Install Git or set VCPKG_INSTALLATION_ROOT.
                     exit /b 1
                 )
             )
-            call "%VCPKG_ROOT%\bootstrap-vcpkg.bat" -disableMetrics
+            call "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
             if errorlevel 1 exit /b 1
         )
     )
-    call "%VCPKG_ROOT%\vcpkg.exe" install curl:x64-windows
+    call "!VCPKG_ROOT!\vcpkg.exe" install curl:x64-windows
     if errorlevel 1 exit /b 1
-    set "CURL_LIB_DIR=%VCPKG_ROOT%\installed\x64-windows\lib"
+    set "CURL_LIB_DIR=!VCPKG_ROOT!\installed\x64-windows\lib"
 )
 
 if not exist "%CURL_LIB_DIR%\libcurl.lib" (
@@ -54,9 +55,9 @@ if not exist "%CURL_LIB_DIR%\libcurl.lib" (
     exit /b 1
 )
 
-set "GAMEJOLT_CURL_LIB_DIR=%CURL_LIB_DIR%"
-set "LIB=%CURL_LIB_DIR%;%LIB%"
-if exist "%CURL_LIB_DIR%\..\bin" set "PATH=%CURL_LIB_DIR%\..\bin;%PATH%"
+set "CURL_BIN_DIR="
+if exist "%CURL_LIB_DIR%\..\bin" set "CURL_BIN_DIR=%CURL_LIB_DIR%\..\bin"
 if defined GITHUB_ENV echo GAMEJOLT_CURL_LIB_DIR=%CURL_LIB_DIR%>>"%GITHUB_ENV%"
-if defined GITHUB_PATH if exist "%CURL_LIB_DIR%\..\bin" echo %CURL_LIB_DIR%\..\bin>>"%GITHUB_PATH%"
+if defined GITHUB_PATH if defined CURL_BIN_DIR echo %CURL_BIN_DIR%>>"%GITHUB_PATH%"
 echo [curl] Using libcurl.lib: "%CURL_LIB_DIR%\libcurl.lib"
+endlocal & set "GAMEJOLT_CURL_LIB_DIR=%CURL_LIB_DIR%" & set "LIB=%CURL_LIB_DIR%;%LIB%" & set "PATH=%CURL_BIN_DIR%;%PATH%"
