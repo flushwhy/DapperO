@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -19,13 +24,63 @@ jobs:
         uses: laytan/setup-odin@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          branch: 84bc3fc2100b0f7880a3af37f71bccdcda41c6f9
 
-      - name: Prepare pinned Gamejoltodin source
+      - name: Show Odin version
+        run: odin version
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install curl
+
+      - name: Configure MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Prepare Gamejoltodin and find or install curl (Windows)
+        if: runner.os == 'Windows'
         shell: cmd
         run: scripts\setup_gamejoltodin.bat
 
-      - name: Check Gamejoltodin example
-        run: odin check examples/gamejoltodin
+      - name: Prepare pinned Gamejoltodin source (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="vendor/Gamejoltodin"
+          pinned_commit="79302eeff588cb4c52ed32e7384fa1a3392d6682"
+          mkdir -p vendor
+          if [ ! -d "$dest/.git" ]; then
+            git clone https://github.com/flushwhy/Gamejoltodin.git "$dest"
+          fi
+          git -C "$dest" fetch origin "$pinned_commit"
+          git -C "$dest" checkout --detach "$pinned_commit"
 
-      - name: Build DapperO
-        run: odin build .
+      - name: Check Gamejoltodin example
+        run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
+
+      - name: Add curl to MSVC library search path
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not $env:GAMEJOLT_CURL_LIB_DIR) {
+            throw "GAMEJOLT_CURL_LIB_DIR was not exported by setup_gamejoltodin.bat"
+          }
+          $curlLib = Join-Path $env:GAMEJOLT_CURL_LIB_DIR "libcurl.lib"
+          if (-not (Test-Path $curlLib)) {
+            throw "libcurl.lib not found: $curlLib"
+          }
+          Write-Host "Using libcurl import library: $curlLib"
+          "LIB=$env:GAMEJOLT_CURL_LIB_DIR;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build DapperO (Windows)
+        if: runner.os == 'Windows'
+        run: odin build . -out:dappero.exe -strict-style -vet -no-bounds-check -o:speed -subsystem:windows -collection:gamejolt=vendor/Gamejoltodin
+
+      - name: Build DapperO (Linux and macOS)
+        if: runner.os != 'Windows'
+        run: odin build . -collection:gamejolt=vendor/Gamejoltodin

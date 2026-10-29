@@ -4,6 +4,8 @@ A small 2D platformer built with [Odin](https://odin-lang.org/) and Raylib.
 
 ## Build
 
+Use the same Odin dev compiler as CI: commit `84bc3fc2100b0f7880a3af37f71bccdcda41c6f9` (`dev-2026-10-nightly`). CI pins this exact compiler commit. To use it locally, check out that commit in your Odin compiler source tree and rebuild/install Odin.
+
 Run the game with:
 
 ```sh
