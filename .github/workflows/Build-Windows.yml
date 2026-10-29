@@ -37,6 +37,10 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install curl
 
+      - name: Configure MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Prepare Gamejoltodin and find or install curl (Windows)
         if: runner.os == 'Windows'
         shell: cmd
@@ -58,10 +62,6 @@ jobs:
 
       - name: Check Gamejoltodin example
         run: odin check examples/gamejoltodin -collection:gamejolt=vendor/Gamejoltodin
-
-      - name: Configure MSVC environment
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Add curl to MSVC library search path
         if: runner.os == 'Windows'
